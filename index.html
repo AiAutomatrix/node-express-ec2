@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stripe Card Element</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+</head>
+<body>
+  <div id="buy_btn_1P9yiOP6PvKwfzD6HcLo7uPQ"></div>
+  <div id="card-element"><!-- A Stripe Element will be inserted here. --></div>
+
+  <!-- Used to display form errors. -->
+  <div id="card-errors" role="alert"></div>
+
+  <button id="submit">Pay Now</button>
+
+  <script>
+    var stripe = Stripe('your_stripe_publishable_key');
+    var elements = stripe.elements();
+
+    var cardElement = elements.create('card');
+
+    cardElement.mount('#card-element');
+
+    var cardErrors = document.getElementById('card-errors');
+
+    cardElement.addEventListener('change', function(event) {
+      if (event.error) {
+        cardErrors.textContent = event.error.message;
+      } else {
+        cardErrors.textContent = '';
+      }
+    });
+
+    var submitButton = document.getElementById('submit');
+
+    submitButton.addEventListener('click', async function(event) {
+      var { clientSecret } = await fetch('/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: 1000 }) // Change the amount as needed
+      }).then(response => response.json());
+
+      var result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: 'Customer Name'
+          }
+        }
+      });
+
+      if (result.error) {
+        // Show error to your customer
+        console.error(result.error.message);
+      } else {
+        // Payment successful
+        console.log(result.paymentIntent);
+      }
+    });
+
+    var buyButton = stripe.elements.create('buyButton', {
+      id: 'buy_btn_1P9yiOP6PvKwfzD6HcLo7uPQ',
+      style: {
+        paymentRequestButton: {
+          type: 'default',
+          theme: 'light',
+          height: '64px'
+        }
+      }
+    });
+
+    buyButton.mount('#buy_btn_1P9yiOP6PvKwfzD6HcLo7uPQ');
+  </script>
+</body>
+</html>
