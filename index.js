@@ -1,11 +1,21 @@
-import express from 'express'
-import path from 'path'
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import stripeRoutes from "./stripe-integration/server.js";
 
-const app = express()
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-app.listen(5001, () => console.log( ' API running on port 5001'))
+const app = express();
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(join(__dirname, 'stripe-integration')));
 
-app.get('/', (req, res) => res.json( 'My API Running :)'))
+// Mount Stripe integration routes
+app.use("/stripe", stripeRoutes);
+
+// Define your API routes
+app.get('/api', (req, res) => res.json({ message: 'My API Running :)' }));
+
+// Start the server
+app.listen(5001, () => console.log('API running on port 5001'));
